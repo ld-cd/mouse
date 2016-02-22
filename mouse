@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# by default use /etc/runit as staging directory
+if [$STAGING_DIRECTORY = ""]; then
+    export STAGING_DIRECTORY=/etc/runit
+    exit 1
+fi
+if [! -d $STAGING_DIRECTORY]; then
+    echo "error: invalid staging directory"
+    exit 1
+fi
+if [! -d /etc/service]; then
+    echo "error: runit does not appear to be installed correctly (can't find /etc/service)"
+    exit 1
+fi
+if [! which sv]; then
+    echo "error: cant find sv"
+    exit 1
+fi
+
+exit_status=0
+case "$1" in
+
+    enable )
+	echo "Attempting to enable service $2"
+	if [! -x $STAGING_DIRECTORY/$2/run]; then
+	    echo "error: no such service $2"
+	fi
+        if [ -e /etc/service/$2]; then
+	    echo "error: service appears to be enabled already"
+	fi
+	ln -s $STAGING_DIRECTORY/$2 /etc/service
+	;;
+    disable )
+	echo "Attempting to disable service $2"
+        if [! -e /etc/service/$2]; then
+	    echo "error: service appears to be disabled already"
+	fi
+	rm /etc/service/$2
+	;;
+esac
+sv "$@"
